@@ -4,25 +4,81 @@ This README would normally document whatever steps are necessary to get the
 application up and running.
 
 Things you may want to cover:
+facebook authentication:
 
-* Ruby version
+gem file:
 
-* System dependencies
+gem 'omniauth' 
+gem 'devise' 
+gem 'omniauth-facebook'
+gem 'certified', '~> 0.1.1'
 
-* Configuration
+$bundle install
 
-* Database creation
+$rails g devise:install
+$rails g devise user
 
-* Database initialization
+$rails g migration AddColumnsToUsers provider:string uid:string name:string
 
-* How to run the test suite
+$rake db:migrate
 
-* Services (job queues, cache servers, search engines, etc.)
+goto config/initializers/devise.rb
 
-* Deployment instructions
+add
 
-* ...
+1)require "omniauth-facebook"
+2)config.omniauth :facebook, "APP_ID", "APP_SECRET"
 
+app/models/user.rb
+
+devise :omniauthable
+
+config/routes.rb
+
+devise_for :users, :controllers => { :omniauth_callbacks => "users/omniauth_callbacks" }
+
+$ rails g controller users/omniauth_callbacks
+
+app/controllers/users/omniauth_callbacks_controller.rb
+
+class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
+  def facebook
+    # You need to implement the method below in your model (e.g. app/models/user.rb)
+    @user = User.find_for_facebook_oauth(request.env["omniauth.auth"], current_user)
+ 
+    if @user.persisted?
+      sign_in_and_redirect @user, :event => :authentication #this will throw if @user is not activated
+      set_flash_message(:notice, :success, :kind => "Facebook") if is_navigational_format?
+    else
+      session["devise.facebook_data"] = request.env["omniauth.auth"]
+      redirect_to new_user_registration_url
+    end
+  end
+end
+
+app/models/user.rb
+
+def self.find_for_facebook_oauth(auth, signed_in_resource=nil)
+    user = User.where(:provider => auth.provider, :uid => auth.uid).first
+    if user
+      return user
+    else
+      registered_user = User.where(:email => auth.info.email).first
+      if registered_user
+        return registered_user
+      else
+        user = User.create(name:auth.extra.raw_info.name,
+                            provider:auth.provider,
+                            uid:auth.uid,
+                            email:auth.info.email,
+                            password:Devise.friendly_token[0,20]
+                          )
+      end
+       
+    end
+  end
+  
+  
 
 Please feel free to use a different markup language if you do not plan to run
 <tt>rake doc:app</tt>.
