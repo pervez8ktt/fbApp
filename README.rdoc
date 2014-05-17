@@ -22,15 +22,15 @@ $rails g migration AddColumnsToUsers provider:string uid:string name:string
 
 $rake db:migrate
 
-\config\environments\development.rb
+config/environments/development.rb
 
 config.action_mailer.default_url_options = { :host => 'localhost:3000' }
 
-\app\controllers\application_controller.rb
+app/controllers/application_controller.rb
 
 before_action :authenticate_user!
 
-\app\views\layouts
+/app/views/layouts
 
 <% if notice %>
   <p class="alert alert-success"><%= notice %></p>
@@ -49,7 +49,7 @@ before_action :authenticate_user!
 <% end %>
 </p>
 
-\config\initializers\devise.rb
+config/initializers/devise.rb
 
 add
 
